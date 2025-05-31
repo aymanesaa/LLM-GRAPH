@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Choisir une option</title>
+  <style>
+    body {
+      background-color: #f9f9f9;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+      width: auto;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #222;
+    }
+
+    .horizontal-options {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      background: #f9f9f9;
+      border: 2px solid #e0e0e0;
+      border-radius: 0.75rem;
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      transition: border 0.2s ease;
+      position: relative;
+    }
+
+    .option:hover {
+      border-color: #ccc;
+    }
+
+    .option input[type="radio"] {
+      display: none;
+    }
+
+    .custom-radio {
+      width: 1.2rem;
+      height: 1.2rem;
+      border-radius: 50%;
+      border: 3px solid #ccc;
+      margin-right: 0.5rem;
+      display: inline-block;
+      position: relative;
+    }
+
+    .option input[type="radio"]:checked + .custom-radio {
+      border-color: #007bff;
+    }
+
+    .option input[type="radio"]:checked + .custom-radio::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 8px;
+      height: 8px;
+      background-color: #007bff;
+      border-radius: 50%;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      padding: 0.6rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Choisir une option</h2>
+    <form class="horizontal-options" id="optionForm">
+      <label class="option">
+        <input type="radio" name="option" value="exercices" checked>
+        <span class="custom-radio"></span>
+        Exercices
+      </label>
+
+      <label class="option">
+        <input type="radio" name="option" value="graph">
+        <span class="custom-radio"></span>
+        Mon graphe
+      </label>
+    </form>
+    <button id="startBtn">Commencer</button>
+  </div>
+
+  <script>
+    document.getElementById('startBtn').addEventListener('click', function () {
+      const selectedOption = document.querySelector('input[name="option"]:checked').value;
+
+      if (selectedOption === 'exercices') {
+        window.location.href = 'sc.html';
+      } else if (selectedOption === 'graph') {
+        window.location.href = 'mongraphe.html';
+      }
+    });
+  </script>
+</body>
+</html>

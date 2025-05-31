@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escape Game - L'Algorithme de Prim</title>
+    <style>
+        * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    overflow-x: hidden;
+}
+
+.game-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    background: white;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #2196F3;
+}
+
+.timer {
+    font-size: 1.2rem;
+    color: #f44336;
+    font-weight: bold;
+}
+
+.main-content {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 2rem;
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.game-area {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.scenario-panel {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.scenario-text {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 15px;
+    border-left: 4px solid #2196F3;
+    line-height: 1.6;
+    color: #333;
+}
+
+.graph-canvas {
+    width: 100%;
+    height: 400px;
+    background: white;
+    border-radius: 15px;
+    border: 2px solid #e0e0e0;
+    cursor: crosshair;
+    position: relative;
+}
+
+.controls {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn {
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    min-width: 120px;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn.primary {
+    background: #2196F3;
+    color: white;
+}
+
+.btn.danger {
+    background: #f44336;
+    color: white;
+}
+
+.chat-container {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 1rem;
+    height: 300px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+}
+
+.chat-message {
+    background: white;
+    padding: 12px 16px;
+    border-radius: 18px;
+    margin-bottom: 0.8rem;
+    animation: fadeInUp 0.3s ease;
+    color: #333;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.chat-message.ai {
+    background: #f0f0f0;
+    border-left: 3px solid #2196F3;
+}
+
+.chat-message.loading {
+    background: #e3f2fd;
+    border-left: 3px solid #2196F3;
+}
+
+.chat-input {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 25px;
+    background: white;
+    color: #333;
+    outline: none;
+    font-size: 14px;
+}
+
+.chat-input input:focus {
+    border-color: #2196F3;
+}
+
+.chat-input input::placeholder {
+    color: #999;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background: #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2196F3, #1976d2);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.node {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background: #2196F3;
+    border: 3px solid white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.node:hover {
+    transform: scale(1.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.node.selected {
+    background: #2196F3;
+    color: white;
+}
+
+.edge {
+    position: absolute;
+    background: #666;
+    height: 2px;
+    transform-origin: left center;
+    z-index: 1;
+}
+
+.edge-weight {
+    position: absolute;
+    background: white;
+    color: #333;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: bold;
+    z-index: 2;
+    border: 1px solid #e0e0e0;
+}
+
+.prim-edge {
+    background: #4caf50 !important;
+    height: 4px !important;
+    box-shadow: 0 0 10px #4caf50;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 20px;
+    max-width: 500px;
+    text-align: center;
+    animation: modalAppear 0.5s ease;
+    color: #333;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.loading-dots {
+    display: inline-block;
+}
+
+.loading-dots::after {
+    content: '';
+    animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60% { content: '...'; }
+    80%, 100% { content: ''; }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes modalAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.hint-panel {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 15px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.hint-panel h3 {
+    color: #2196F3;
+    margin-bottom: 0.5rem;
+}
+
+.error-message {
+    background: #ffebee;
+    border-left: 3px solid #f44336;
+    color: #d32f2f;
+}
+
+@media (max-width: 1024px) {
+    .main-content {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="game-container">
+
+        <main class="main-content">
+            <div class="game-area">
+                
+                <h2> Laboratoire de Graphes</h2>
+                <p>Créez votre graphe en cliquant pour placer des nœuds, puis connectez-les !</p>
+                
+                <div class="graph-canvas" id="graphCanvas"></div>
+                
+                <div class="controls">
+                    <button class="btn" id="addNodeBtn">➕ Ajouter Nœud</button>
+                    <button class="btn" id="connectNodesBtn">🔗 Connecter Nœuds</button>
+                    <button class="btn primary" id="solvePrimBtn">🤖 Résoudre avec IA</button>
+                    <button class="btn danger" id="clearGraphBtn">🗑️ Effacer</button>
+                </div>
+
+                <div class="hint-panel">
+                    <h3>💡 Rappel - Algorithme de Prim</h3>
+                    <p>L'algorithme de Prim trouve l'arbre couvrant de poids minimum en partant d'un nœud et en ajoutant successivement l'arête de poids minimum qui connecte l'arbre en construction à un nouveau nœud.</p>
+                </div>
+            </div>
+
+            <div class="scenario-panel">
+                
+
+                <div>
+                    <div class="chat-container" id="chatContainer">
+                        <div class="chat-message ai">
+                            <strong> Gemini :</strong> Bonjour ! Je suis votre assistant IA Gemini. Créez votre graphe et posez-moi vos questions sur l'algorithme de Prim !
+                        </div>
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" id="chatInput" placeholder="Posez votre question sur le graphe...">
+                        <button class="btn primary" id="sendChatBtn">📤</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de succès -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <h2>🎉 Félicitations !</h2>
+            <p>Vous avez réussi à débloquer la sortie !</p>
+            <p>L'algorithme de Prim a été correctement appliqué.</p>
+            <button class="btn primary" onclick="closeModal()">Continuer</button>
+        </div>
+    </div>
+
+    <script>
+        class PrimEscapeGame {
+            constructor() {
+                this.nodes = [];
+                this.edges = [];
+                this.selectedNodes = [];
+                this.mode = 'add'; // 'add' ou 'connect'
+                this.nodeCounter = 0;
+                this.canvas = document.getElementById('graphCanvas');
+                this.timeLeft = 1 * 5; // 45 minutes en secondes
+                this.progress = 0;
+                this.primSolution = [];
+                this.isWaitingForAI = false;
+                
+                // Configuration Gemini AI
+                //this.GEMINI_API_KEY = 'AIzaSyCJKDhLjIccsR5SNEBaZUsACtTA9_1ROhM';
+                this.GEMINI_API_URL ='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=x';
+                
+                this.initializeEventListeners();
+                this.startTimer();
+            }
+
+            initializeEventListeners() {
+                // Boutons de contrôle
+                document.getElementById('addNodeBtn').addEventListener('click', () => this.setMode('add'));
+                document.getElementById('connectNodesBtn').addEventListener('click', () => this.setMode('connect'));
+                document.getElementById('clearGraphBtn').addEventListener('click', () => this.clearGraph());
+                document.getElementById('solvePrimBtn').addEventListener('click', () => this.solvePrim());
+
+                // Canvas pour placer les nœuds
+                this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
+
+                // Chat
+                document.getElementById('sendChatBtn').addEventListener('click', () => this.sendChatMessage());
+                document.getElementById('chatInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.sendChatMessage();
+                });
+            }
+
+            setMode(mode) {
+                this.mode = mode;
+                this.selectedNodes = [];
+                this.updateNodeStyles();
+                
+                const cursor = mode === 'add' ? 'crosshair' : 'pointer';
+                this.canvas.style.cursor = cursor;
+            }
+
+            handleCanvasClick(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                if (this.mode === 'add') {
+                    this.addNode(x, y);
+                } else if (this.mode === 'connect') {
+                    this.selectNodeForConnection(x, y);
+                }
+            }
+
+            addNode(x, y) {
+                // Vérifier qu'on ne place pas sur un nœud existant
+                if (this.getNodeAt(x, y)) return;
+
+                const node = {
+                    id: this.nodeCounter++,
+                    x: x,
+                    y: y,
+                    label: String.fromCharCode(65 + this.nodes.length) // A, B, C, etc.
+                };
+
+                this.nodes.push(node);
+                this.renderNode(node);
+                this.updateProgress();
+            }
+
+            getNodeAt(x, y) {
+                return this.nodes.find(node => {
+                    const distance = Math.sqrt((node.x - x) ** 2 + (node.y - y) ** 2);
+                    return distance <= 15;
+                });
+            }
+
+            selectNodeForConnection(x, y) {
+                const node = this.getNodeAt(x, y);
+                if (!node) return;
+
+                if (this.selectedNodes.length === 0) {
+                    this.selectedNodes.push(node);
+                    this.updateNodeStyles();
+                } else if (this.selectedNodes.length === 1) {
+                    if (this.selectedNodes[0].id !== node.id) {
+                        const weight = this.promptForWeight();
+                        if (weight !== null) {
+                            this.addEdge(this.selectedNodes[0], node, weight);
+                        }
+                    }
+                    this.selectedNodes = [];
+                    this.updateNodeStyles();
+                }
+            }
+
+            promptForWeight() {
+                const weight = prompt("Entrez le poids de l'arête:", "1");
+                return weight ? parseInt(weight) : null;
+            }
+
+            addEdge(node1, node2, weight) {
+                // Vérifier qu'une arête n'existe pas déjà
+                const existingEdge = this.edges.find(edge => 
+                    (edge.from.id === node1.id && edge.to.id === node2.id) ||
+                    (edge.from.id === node2.id && edge.to.id === node1.id)
+                );
+
+                if (existingEdge) return;
+
+                const edge = {
+                    from: node1,
+                    to: node2,
+                    weight: weight,
+                    id: `${node1.id}-${node2.id}`
+                };
+
+                this.edges.push(edge);
+                this.renderEdge(edge);
+                this.updateProgress();
+            }
+
+            renderNode(node) {
+                const nodeElement = document.createElement('div');
+                nodeElement.className = 'node';
+                nodeElement.style.left = (node.x - 15) + 'px';
+                nodeElement.style.top = (node.y - 15) + 'px';
+                nodeElement.textContent = node.label;
+                nodeElement.setAttribute('data-node-id', node.id);
+
+                this.canvas.appendChild(nodeElement);
+            }
+
+            renderEdge(edge) {
+                const dx = edge.to.x - edge.from.x;
+                const dy = edge.to.y - edge.from.y;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+                // Ligne de l'arête
+                const edgeElement = document.createElement('div');
+                edgeElement.className = 'edge';
+                edgeElement.style.left = edge.from.x + 'px';
+                edgeElement.style.top = edge.from.y + 'px';
+                edgeElement.style.width = length + 'px';
+                edgeElement.style.transform = `rotate(${angle}deg)`;
+                edgeElement.setAttribute('data-edge-id', edge.id);
+
+                // Poids de l'arête
+                const weightElement = document.createElement('div');
+                weightElement.className = 'edge-weight';
+                weightElement.style.left = (edge.from.x + edge.to.x) / 2 - 10 + 'px';
+                weightElement.style.top = (edge.from.y + edge.to.y) / 2 - 10 + 'px';
+                weightElement.textContent = edge.weight;
+                weightElement.setAttribute('data-weight-id', edge.id);
+
+                this.canvas.appendChild(edgeElement);
+                this.canvas.appendChild(weightElement);
+            }
+
+            updateNodeStyles() {
+                document.querySelectorAll('.node').forEach(nodeEl => {
+                    const nodeId = parseInt(nodeEl.getAttribute('data-node-id'));
+                    const isSelected = this.selectedNodes.some(node => node.id === nodeId);
+                    nodeEl.classList.toggle('selected', isSelected);
+                });
+            }
+
+            clearGraph() {
+                this.nodes = [];
+                this.edges = [];
+                this.selectedNodes = [];
+                this.nodeCounter = 0;
+                this.canvas.innerHTML = '';
+                this.updateProgress();
+                this.clearPrimVisualization();
+            }
+
+            async solvePrim() {
+                if (this.nodes.length < 2) {
+                    this.addChatMessage("Il faut au moins 2 nœuds pour calculer un arbre couvrant minimum !");
+                    return;
+                }
+
+                const graphDescription = this.getGraphDescription();
+                this.addChatMessage(`Calcul de l'arbre couvrant minimum pour le graphe: ${graphDescription}`);
+                
+                try {
+                    const solution = this.calculatePrimAlgorithm();
+                    this.visualizePrimSolution(solution);
+                    
+                    // Demander à Gemini d'expliquer la solution
+                    const prompt = `Voici un graphe avec les nœuds [${this.nodes.map(n => n.label).join(', ')}] et les arêtes [${this.edges.map(e => `${e.from.label}-${e.to.label}(${e.weight})`).join(', ')}]. L'algorithme de Prim a trouvé l'arbre couvrant minimum suivant: ${this.formatPrimSolution(solution)}. Explique brièvement cette solution en français de manière pédagogique.`;
+                    
+                    await this.sendToGemini(prompt);
+                    
+                    // Vérifier la réussite
+                    if (solution.length === this.nodes.length - 1) {
+                        setTimeout(() => this.checkSuccess(), 1000);
+                    }
+                } catch (error) {
+                    this.addChatMessage("Erreur lors du calcul. Vérifiez que votre graphe est connexe.");
+                }
+            }
+
+            getGraphDescription() {
+                const nodeLabels = this.nodes.map(n => n.label).join(', ');
+                const edgeDescriptions = this.edges.map(e => 
+                    `${e.from.label}--${e.to.label}(${e.weight})`
+                ).join(', ');
+                return `Nœuds: [${nodeLabels}], Arêtes: [${edgeDescriptions}]`;
+            }
+
+            calculatePrimAlgorithm() {
+                if (this.nodes.length === 0) return [];
+
+                const visited = new Set();
+                const mst = [];
+                const startNode = this.nodes[0];
+                visited.add(startNode.id);
+
+                while (visited.size < this.nodes.length) {
+                    let minEdge = null;
+                    let minWeight = Infinity;
+
+                    for (const edge of this.edges) {
+                        const fromVisited = visited.has(edge.from.id);
+                        const toVisited = visited.has(edge.to.id);
+
+                        if (fromVisited !== toVisited && edge.weight < minWeight) {
+                            minEdge = edge;
+                            minWeight = edge.weight;
+                        }
+                    }
+
+                    if (!minEdge) break; // Graphe non connexe
+
+                    mst.push(minEdge);
+                    visited.add(minEdge.from.id);
+                    visited.add(minEdge.to.id);
+                }
+
+                return mst;
+            }
+
+            visualizePrimSolution(solution) {
+                this.clearPrimVisualization();
+                
+                solution.forEach((edge, index) => {
+                    setTimeout(() => {
+                        const edgeElement = document.querySelector(`[data-edge-id="${edge.id}"]`);
+                        if (edgeElement) {
+                            edgeElement.classList.add('prim-edge');
+                        }
+                    }, index * 1000);
+                });
+            }
+
+            clearPrimVisualization() {
+                document.querySelectorAll('.prim-edge').forEach(el => {
+                    el.classList.remove('prim-edge');
+                });
+            }
+
+            formatPrimSolution(solution) {
+                const totalWeight = solution.reduce((sum, edge) => sum + edge.weight, 0);
+                const edges = solution.map(e => `${e.from.label}-${e.to.label} (${e.weight})`).join(', ');
+                return `${edges} - Poids total: ${totalWeight}`;
+            }
+
+            async sendChatMessage() {
+                if (this.isWaitingForAI) return;
+                
+                const input = document.getElementById('chatInput');
+                const message = input.value.trim();
+                if (!message) return;
+
+                this.addChatMessage(message, false);
+                input.value = '';
+
+                // Créer le contexte pour Gemini
+                const graphInfo = this.nodes.length > 0 ? `\nContexte actuel: Le graphe contient ${this.nodes.length} nœuds (${this.nodes.map(n => n.label).join(', ')}) et ${this.edges.length} arêtes.` : '';
+                const fullPrompt = `Tu es un assistant pédagogique dans un escape game sur l'algorithme de Prim. Réponds en français de manière claire et concise. Question de l'utilisateur: "${message}"${graphInfo}`;
+
+                await this.sendToGemini(fullPrompt);
+            }
+
+            async sendToGemini(prompt) {
+                this.isWaitingForAI = true;
+                this.updateChatUI(true);
+
+                try {
+                    const response = await fetch(`${this.GEMINI_API_URL}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{
+                                    text: prompt
+                                }]
+                            }],
+                            generationConfig: {
+                                temperature: 0.7,
+                                topK: 40,
+                                topP: 0.95,
+                                maxOutputTokens: 1024,
+                            }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Erreur API: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    if (data.candidates && data.candidates.length > 0) {
+                        const aiResponse = data.candidates[0].content.parts[0].text;
+                        this.addChatMessage(aiResponse, true);
+                    } else {
+                        throw new Error('Aucune réponse générée');
+                    }
+
+                } catch (error) {
+                    console.error('Erreur Gemini:', error);
+                    this.addChatMessage("Désolé, je ne peux pas répondre en ce moment. Vérifiez votre connexion internet ou réessayez plus tard.", true, true);
+                } finally {
+                    this.isWaitingForAI = false;
+                    this.updateChatUI(false);
+                }
+            }
+
+            updateChatUI(isLoading) {
+                const sendBtn = document.getElementById('sendChatBtn');
+                const chatInput = document.getElementById('chatInput');
+                
+                if (isLoading) {
+                    sendBtn.disabled = true;
+                    chatInput.disabled = true;
+                    sendBtn.innerHTML = '<span class="loading-dots">🤖</span>';
+                    
+                    // Ajouter un message de chargement
+                    this.addLoadingMessage();
+                } else {
+                    sendBtn.disabled = false;
+                    chatInput.disabled = false;
+                    sendBtn.innerHTML = '📤';
+                    
+                    // Supprimer le message de chargement
+                    this.removeLoadingMessage();
+                }
+            }
+
+            addLoadingMessage() {
+                const container = document.getElementById('chatContainer');
+                const loadingEl = document.createElement('div');
+                loadingEl.className = 'chat-message loading';
+                loadingEl.id = 'loadingMessage';
+                loadingEl.innerHTML = '<strong>Gemini :</strong> <span class="loading-dots">Je réfléchis</span>';
+                
+                container.appendChild(loadingEl);
+                container.scrollTop = container.scrollHeight;
+            }
+
+            removeLoadingMessage() {
+                const loadingMessage = document.getElementById('loadingMessage');
+                if (loadingMessage) {
+                    loadingMessage.remove();
+                }
+            }
+
+            addChatMessage(message, isAI = false, isError = false) {
+                const container = document.getElementById('chatContainer');
+                const messageEl = document.createElement('div');
+                messageEl.className = `chat-message ${isAI ? 'ai' : ''} ${isError ? 'error-message' : ''}`;
+                messageEl.innerHTML = `<strong>${isAI ? ' Gemini' : '👤 Vous'} :</strong> ${message.replace(/\n/g, '<br>')}`;
+                
+                container.appendChild(messageEl);
+                container.scrollTop = container.scrollHeight;
+            }
+
+            updateProgress() {
+                const baseProgress = Math.min((this.nodes.length + this.edges.length) * 10, 70);
+                this.progress = baseProgress;
+                document.getElementById('progress').style.width = this.progress + '%';
+            }
+
+            checkSuccess() {
+                if (this.progress >= 50 && this.primSolution.length > 0) {
+                    document.getElementById('successModal').style.display = 'flex';
+                }
+            }
+
+            startTimer() {
+                const timerEl = document.getElementById('timer');
+                
+                const updateTimer = () => {
+                    const minutes = Math.floor(this.timeLeft / 60);
+                    const seconds = this.timeLeft % 60;
+                    timerEl.textContent = `⏱️ ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    if (this.timeLeft > 0) {
+                        this.timeLeft--;
+                        setTimeout(updateTimer, 1000);
+                    } else {
+                        this.addChatMessage("⏰ Temps écoulé ! L'alarme se déclenche !", true);
+                    }
+                };
+                
+                updateTimer();
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('successModal').style.display = 'none';
+        }
+
+        // Initialisation du jeu
+        document.addEventListener('DOMContentLoaded', () => {
+            new PrimEscapeGame();
+        });
+    </script>
+</body>
+</html>
+
+
+

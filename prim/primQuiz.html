@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz - Algorithme de Prim</title>
+    <style>
+        * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: 4facfe;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.header {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+}
+
+.header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.header p {
+    font-size: 1.2em;
+    opacity: 0.9;
+}
+
+.quiz-container {
+    padding: 40px;
+}
+
+.question-card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 25px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-left: 5px solid #4facfe;
+    display: none;
+    animation: slideIn 0.5s ease-out;
+}
+
+.question-card.active {
+    display: block;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.question-number {
+    background: #4facfe;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
+.progress-bar {
+    flex-grow: 1;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    margin: 0 20px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.question-text {
+    font-size: 1.3em;
+    margin-bottom: 25px;
+    color: #333;
+    line-height: 1.6;
+}
+
+.options {
+    display: grid;
+    gap: 15px;
+}
+
+.option {
+    background: #f8f9ff;
+    border: 2px solid #e0e6ff;
+    border-radius: 12px;
+    padding: 18px 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.1em;
+}
+
+.option:hover {
+    background: #e6f2ff;
+    border-color: #4facfe;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.2);
+}
+
+.option.selected {
+    background: #4facfe;
+    color: white;
+    border-color: #4facfe;
+}
+
+.navigation {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+}
+
+.btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.results-card {
+    display: none;
+    text-align: center;
+    padding: 40px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.score-display {
+    font-size: 3em;
+    font-weight: bold;
+    color: #4facfe;
+    margin: 20px 0;
+}
+
+.level-badge {
+    display: inline-block;
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-size: 1.3em;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+.level-beginner {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    color: #8e44ad;
+}
+
+.level-intermediate {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    color: #2c3e50;
+}
+
+.level-advanced {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    color: #e67e22;
+}
+
+.level-expert {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.scenario-preview {
+    margin-top: 30px;
+    padding: 25px;
+    background: #f8f9ff;
+    border-radius: 12px;
+    border-left: 4px solid #4facfe;
+}
+
+.scenario-preview h3 {
+    color: #4facfe;
+    margin-bottom: 15px;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌳 Quiz Algorithme de Prim</h1>
+            <p>Évaluez votre niveau de compréhension</p>
+        </div>
+
+        <div class="quiz-container">
+            <!-- Questions -->
+            <div class="question-card active" data-question="1">
+                <div class="question-header">
+                    <div class="question-number">Question 1/10</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 10%"></div>
+                    </div>
+                </div>
+                <div class="question-text">
+                    Qu'est-ce que l'algorithme de Prim ?
+                </div>
+                <div class="options">
+                    <div class="option" data-value="0">Un algorithme de tri des données</div>
+                    <div class="option" data-value="1">Un algorithme pour trouver l'arbre couvrant minimal d'un graphe</div>
+                    <div class="option" data-value="0">Un algorithme de recherche dans un arbre binaire</div>
+                    <div class="option" data-value="0">Un algorithme de compression de données</div>
+                </div>
+            </div>
+
+            <div class="question-card" data-question="2">
+                <div class="question-header">
+                    <div class="question-number">Question 2/10</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 20%"></div>
+                    </div>
+                </div>
+                <div class="question-text">
+                    Quelle est la complexité temporelle de l'algorithme de Prim avec une file de priorité ?
+                </div>
+                <div class="options">
+                    <div class="option" data-value="0">O(V²)</div>
+                    <div class="option" data-value="1">O((V + E) log V)</div>
+                    <div class="option" data-value="0">O(E log E)</div>
+                    <div class="option" data-value="0">O(V³)</div>
+                </div>
+            </div>
+
+            <div class="question-card" data-question="3">
+                <div class="question-header">
+                    <div class="question-number">Question 3/10</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 30%"></div>
+                    </div>
+                </div>
+                <div class="question-text">
+                    Dans l'algorithme de Prim, comment choisit-on la prochaine arête à ajouter ?
+                </div>
+                <div class="options">
+                    <div class="option" data-value="0">L'arête la plus longue disponible</div>
+                    <div class="option" data-value="1">L'arête de poids minimal qui connecte l'arbre à un nouveau sommet</div>
+                    <div class="option" data-value="0">Une arête choisie aléatoirement</div>
+                    <div class="option" data-value="0">La première arête trouvée</div>
+                </div>
+            </div>
+
+            <div class="question-card" data-question="4">
+                <div class="question-header">
+                    <div class="question-number">Question 4/10</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 40%"></div>
+                    </div>
+                </div>
+                <div class="question-text">
+                    Quel type de graphe est nécessaire pour appliquer l'algorithme de Prim ?
+                </div>
+                <div class="options">
+                    <div class="option" data-value="1">Un graphe connexe et pondéré</div>
+                    <div class="option" data-value="0">Un graphe orienté uniquement</div>
+                    <div class="option" data-value="0">Un graphe sans cycles</div>
+                    <div class="option" data-value="0">Un graphe planaire</div>
+                </div>
+            </div>
+
+            <div class="question-card" data-question="5">
+                <div class="question-header">
+                    <div class="question-number">Question 5/10</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 50%"></div>
+                    </div>
+                </div>
+                <div class="question-text">
+                    Combien d'arêtes contient l'arbre couvrant minimal d'un graphe à n sommets ?
+                </div>
+                <div class="options">
+                    <div class="option" data-value="0">n arêtes</div>
+                    <div class="option" data-value="1">n-1 arêtes</div>
+                    <div class="option" data-value="0">n+1 arêtes</div>
+                    <div class="option" data-value="0">n² arêtes</div>
+                </div>
+            </div>
+
+            <div class="question-card" data-question="6">
+                <div class="question-header">
+                    <div class="question-number">Question 6/10</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 60%"></div>
+                    </div>
+                </div>
+                <div class="question-text">
+                    Quelle structure de données est couramment utilisée dans l'implémentation efficace de Prim ?
+                </div>
+                <div class="options">
+                    <div class="option" data-value="0">Pile (Stack)</div>
+                    <div class="option" data-value="1">File de priorité (Priority Queue)</div>
+                    <div class="option" data-value="0">Table de hachage</div>
+                    <div class="option" data-value="0">Liste chaînée simple</div>
+                </div>
+            </div>
+
+            <div class="question-card" data-question="7">
+                <div class="question-header">
+                    <div class="question-number">Question 7/10</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 70%"></div>
+                    </div>
+                </div>
+                <div class="question-text">
+                    L'algorithme de Prim est-il un algorithme glouton (greedy) ?
+                </div>
+                <div class="options">
+                    <div class="option" data-value="1">Oui, il fait toujours le choix localement optimal</div>
+                    <div class="option" data-value="0">Non, il utilise la programmation dynamique</div>
+                    <div class="option" data-value="0">Non, il explore toutes les possibilités</div>
+                    <div class="option" data-value="0">Cela dépend du graphe</div>
+                </div>
+            </div>
+
+            <div class="question-card" data-question="8">
+                <div class="question-header">
+                    <div class="question-number">Question 8/10</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 80%"></div>
+                    </div>
+                </div>
+                <div class="question-text">
+                    Quelle est une application pratique de l'algorithme de Prim ?
+                </div>
+                <div class="options">
+                    <div class="option" data-value="1">Conception de réseaux de télécommunications avec coût minimal</div>
+                    <div class="option" data-value="0">Tri d'un tableau d'entiers</div>
+                    <div class="option" data-value="0">Recherche d'un élément dans une base de données</div>
+                    <div class="option" data-value="0">Chiffrement de données</div>
+                </div>
+            </div>
+
+            <div class="question-card" data-question="9">
+                <div class="question-header">
+                    <div class="question-number">Question 9/10</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 90%"></div>
+                    </div>
+                </div>
+                <div class="question-text">
+                    Quel autre algorithme célèbre résout le même problème que Prim ?
+                </div>
+                <div class="options">
+                    <div class="option" data-value="0">Dijkstra</div>
+                    <div class="option" data-value="1">Kruskal</div>
+                    <div class="option" data-value="0">Bellman-Ford</div>
+                    <div class="option" data-value="0">Floyd-Warshall</div>
+                </div>
+            </div>
+
+            <div class="question-card" data-question="10">
+                <div class="question-header">
+                    <div class="question-number">Question 10/10</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="question-text">
+                    Dans l'implémentation de Prim, que représente la "clé" d'un sommet ?
+                </div>
+                <div class="options">
+                    <div class="option" data-value="0">L'identifiant unique du sommet</div>
+                    <div class="option" data-value="1">Le poids minimal d'une arête connectant ce sommet à l'arbre</div>
+                    <div class="option" data-value="0">Le nombre de voisins du sommet</div>
+                    <div class="option" data-value="0">La position du sommet dans le graphe</div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="navigation">
+                <button class="btn btn-secondary" id="prevBtn" onclick="changeQuestion(-1)" disabled>Précédent</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="changeQuestion(1)">Suivant</button>
+                <button class="btn btn-primary" id="finishBtn" onclick="finishQuiz()" style="display: none;">Terminer</button>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="results-card" id="resultsCard">
+            <h2>🎉 Quiz Terminé !</h2>
+            <div class="score-display" id="scoreDisplay">0/10</div>
+            <div class="level-badge" id="levelBadge">Débutant</div>
+            <p id="levelDescription"></p>
+            
+            <div class="scenario-preview" id="scenarioPreview">
+                <h3>🎯 Votre Parcours d'Apprentissage</h3>
+                <p id="scenarioDescription"></p>
+                <button class="btn btn-primary" onclick="goToLearning()" style="margin-top: 20px;">
+                    Commencer l'Apprentissage
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentQuestion = 1;
+let answers = {};
+let score = 0;
+
+const totalQuestions = 10;
+const correctAnswers = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]; // Index des bonnes réponses
+
+function selectOption(element) {
+    // Désélectionner toutes les options de la question courante
+    const currentCard = document.querySelector(`.question-card[data-question="${currentQuestion}"]`);
+    const options = currentCard.querySelectorAll('.option');
+    options.forEach(opt => opt.classList.remove('selected'));
+    
+    // Sélectionner l'option cliquée
+    element.classList.add('selected');
+    
+    // Enregistrer la réponse
+    answers[currentQuestion] = parseInt(element.dataset.value);
+    
+    // Toujours activer le bouton suivant, même pour les réponses fausses
+    document.getElementById('nextBtn').disabled = false;
+    if (currentQuestion === totalQuestions) {
+        document.getElementById('finishBtn').disabled = false;
+    }
+}
+
+function changeQuestion(direction) {
+    const currentCard = document.querySelector(`.question-card[data-question="${currentQuestion}"]`);
+    currentCard.classList.remove('active');
+    
+    currentQuestion += direction;
+    
+    const nextCard = document.querySelector(`.question-card[data-question="${currentQuestion}"]`);
+    nextCard.classList.add('active');
+    
+    updateNavigationButtons();
+}
+
+function updateNavigationButtons() {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const finishBtn = document.getElementById('finishBtn');
+    
+    prevBtn.disabled = currentQuestion === 1;
+    
+    if (currentQuestion === totalQuestions) {
+        nextBtn.style.display = 'none';
+        finishBtn.style.display = 'inline-block';
+    } else {
+        nextBtn.style.display = 'inline-block';
+        finishBtn.style.display = 'none';
+    }
+}
+
+function calculateScore() {
+    score = 0;
+    for (let i = 1; i <= totalQuestions; i++) {
+        if (answers[i] === correctAnswers[i-1]) {
+            score++;
+        }
+    }
+    return score;
+}
+
+function determineLevel(score) {
+    if (score <= 3) return 'beginner';
+    if (score <= 6) return 'intermediate';
+    if (score <= 8) return 'advanced';
+    return 'expert';
+}
+
+function getScenarioForLevel(level) {
+    const scenarios = {
+        beginner: {
+            title: "🏰 La Quête du Réseau Royal",
+            description: "Rejoignez le Royaume de Graphia où vous devrez aider le roi à construire le réseau de routes le plus économique entre ses châteaux. Un tutoriel interactif avec des explications pas à pas.",
+            page: "sc.html"
+        },
+        intermediate: {
+            title: "🎯 Le Défi de l'Ingénieur",
+            description: "Vous êtes ingénieur réseau et devez optimiser les connexions d'une ville intelligente. Résolvez des problèmes concrets avec l'aide de l'IA.",
+            page: "sc.html"
+        },
+        advanced: {
+            title: "🤔 Débat Socratique avec l'IA",
+            description: "Engagez une discussion philosophique et technique avec l'IA sur l'optimisation, les algorithmes gloutons et leurs limites dans des cas complexes.",
+            page: "sc.html"
+        },
+        expert: {
+            title: "🚀 Le Laboratoire de Recherche",
+            description: "Explorez les variantes avancées de Prim, analysez sa complexité dans différents contextes et découvrez les dernières optimisations algorithmiques.",
+            page: "sc.html"
+        }
+    };
+    return scenarios[level];
+}
+
+function finishQuiz() {
+    const finalScore = calculateScore();
+    const level = determineLevel(finalScore);
+    const scenario = getScenarioForLevel(level);
+    
+    // Stocker les données dans localStorage
+    localStorage.setItem('userScore', finalScore);
+    localStorage.setItem('userLevel', level);
+    localStorage.setItem('totalQuestions', totalQuestions);
+    localStorage.setItem('userAnswers', JSON.stringify(answers));
+    localStorage.setItem('quizCompleted', 'true');
+    localStorage.setItem('scenarioTitle', scenario.title);
+    localStorage.setItem('scenarioDescription', scenario.description);
+    
+    // Cacher le quiz
+    document.querySelector('.quiz-container').style.display = 'none';
+    
+    // Afficher les résultats
+    const resultsCard = document.getElementById('resultsCard');
+    resultsCard.style.display = 'block';
+    
+    // Mettre à jour l'affichage du score
+    document.getElementById('scoreDisplay').textContent = `${finalScore}/10`;
+    
+    // Mettre à jour le badge de niveau
+    const levelBadge = document.getElementById('levelBadge');
+    levelBadge.className = `level-badge level-${level}`;
+    
+    const levelTexts = {
+        beginner: "🌱 Débutant",
+        intermediate: "🌿 Intermédiaire", 
+        advanced: "🌳 Avancé",
+        expert: "🏆 Expert"
+    };
+    levelBadge.textContent = levelTexts[level];
+    
+    // Description du niveau
+    const descriptions = {
+        beginner: "Vous découvrez l'algorithme de Prim. Un apprentissage guidé vous aidera à maîtriser les bases.",
+        intermediate: "Vous comprenez les concepts fondamentaux. Il est temps d'approfondir avec des cas pratiques.",
+        advanced: "Excellente maîtrise ! Explorons ensemble les subtilités et les optimisations de l'algorithme.",
+        expert: "Impressionnant ! Vous êtes prêt pour des défis de haut niveau et des discussions techniques avancées."
+    };
+    document.getElementById('levelDescription').textContent = descriptions[level];
+    
+    // Mettre à jour le scénario
+    document.getElementById('scenarioDescription').innerHTML = `
+        <strong>${scenario.title}</strong><br>
+        ${scenario.description}
+    `;
+    
+    // Stocker les données pour la page suivante (méthode alternative)
+    window.userLevel = level;
+    window.userScore = finalScore;
+    window.scenarioPage = scenario.page;
+}
+
+function goToLearning() {
+    // Construire l'URL avec les paramètres
+    const params = new URLSearchParams({
+        level: window.userLevel || 'beginner',
+        score: window.userScore || 0
+    });
+    
+    // Rediriger vers la page de scénario avec les paramètres
+    window.location.href = `primehome.html?${params.toString()}`;
+}
+
+// Event listeners pour les options
+document.addEventListener('DOMContentLoaded', function() {
+    const options = document.querySelectorAll('.option');
+    options.forEach(option => {
+        option.addEventListener('click', function() {
+            selectOption(this);
+        });
+    });
+    
+    // Vérifier si un quiz a déjà été complété
+    if (localStorage.getItem('quizCompleted') === 'true') {
+        console.log('Quiz précédent trouvé:', {
+            score: localStorage.getItem('userScore'),
+            level: localStorage.getItem('userLevel'),
+            total: localStorage.getItem('totalQuestions')
+        });
+    }
+});
+
+// Fonction pour récupérer les données stockées (à utiliser dans sc.html)
+function getQuizData() {
+    return {
+        score: parseInt(localStorage.getItem('userScore')) || 0,
+        level: localStorage.getItem('userLevel') || 'beginner',
+        totalQuestions: parseInt(localStorage.getItem('totalQuestions')) || 10,
+        answers: JSON.parse(localStorage.getItem('userAnswers')) || {},
+        completed: localStorage.getItem('quizCompleted') === 'true',
+        scenarioTitle: localStorage.getItem('scenarioTitle') || '',
+        scenarioDescription: localStorage.getItem('scenarioDescription') || ''
+    };
+}
+
+// Fonction pour effacer les données du quiz
+function clearQuizData() {
+    localStorage.removeItem('userScore');
+    localStorage.removeItem('userLevel');
+    localStorage.removeItem('totalQuestions');
+    localStorage.removeItem('userAnswers');
+    localStorage.removeItem('quizCompleted');
+    localStorage.removeItem('scenarioTitle');
+    localStorage.removeItem('scenarioDescription');
+}
+    </script>
+</body>
+</html>

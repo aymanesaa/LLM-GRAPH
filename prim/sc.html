@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apprentissage Interactif - Algorithme de Prim</title>
+    <style>
+        * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f2f5;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 20px;
+    height: calc(100vh - 40px);
+}
+
+.main-content {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-sidebar {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    background: #2196F3;
+    color: white;
+    padding: 25px;
+    text-align: center;
+}
+
+.header h1 {
+    font-size: 1.8em;
+    margin-bottom: 10px;
+}
+
+.level-indicator {
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    font-size: 0.9em;
+}
+
+.scenario-content {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+.scenario-card {
+    display: none;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.scenario-card.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.scenario-intro {
+    background: #2196F3;
+    color: white;
+    padding: 25px;
+    border-radius: 15px;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.scenario-intro h2 {
+    font-size: 2em;
+    margin-bottom: 15px;
+}
+
+.interactive-section {
+    background: #f8f9ff;
+    border-radius: 12px;
+    padding: 25px;
+    margin: 20px 0;
+    border-left: 4px solid #2196F3;
+}
+
+.graph-visualization {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    border: 2px solid #e0e6ff;
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.node {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #2196F3;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    position: absolute;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.node:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 15px rgba(33, 150, 243, 0.4);
+}
+
+.node.selected {
+    background: #ff6b6b;
+    animation: pulse 1s infinite;
+}
+
+.node.in-tree {
+    background: #51cf66;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.edge {
+    position: absolute;
+    background: #666;
+    height: 2px;
+    transform-origin: left;
+    transition: all 0.3s ease;
+}
+
+.edge.in-mst {
+    background: #51cf66;
+    height: 4px;
+    box-shadow: 0 0 10px rgba(81, 207, 102, 0.5);
+}
+
+.edge.candidate {
+    background: #ffd43b;
+    height: 3px;
+    animation: glow 1s infinite alternate;
+}
+
+@keyframes glow {
+    from { box-shadow: 0 0 5px rgba(255, 212, 59, 0.5); }
+    to { box-shadow: 0 0 15px rgba(255, 212, 59, 0.8); }
+}
+
+.weight-label {
+    position: absolute;
+    background: white;
+    border: 2px solid #2196F3;
+    border-radius: 12px;
+    padding: 4px 8px;
+    font-size: 0.8em;
+    font-weight: 600;
+    color: #2196F3;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.controls {
+    display: flex;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2196F3 0%, #00f2fe 100%);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(33, 150, 243, 0.4);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.chat-header {
+    background: #f8f9fa;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.ai-avatar {
+    width: 50px;
+    height: 50px;
+    background: #2196F3;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.chat-title {
+    color: #1a1a1a;
+    font-size: 1.4em;
+    font-weight: 600;
+}
+
+.chat-subtitle {
+    color: #666;
+    font-size: 0.9em;
+    margin-top: 2px;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    max-height: 400px;
+}
+
+.message {
+    margin-bottom: 15px;
+    display: flex;
+    gap: 10px;
+    animation: slideIn 0.3s ease-out;
+}
+
+.message.user {
+    flex-direction: row-reverse;
+}
+
+.message.ai {
+    flex-direction: row;
+}
+
+.message-content {
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.message.user .message-content {
+    background: #2196F3;
+    color: white;
+}
+
+.message.ai .message-content {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.message.system .message-content {
+    background: #e3f2fd;
+    color: #1976d2;
+    text-align: center;
+    font-style: italic;
+    max-width: 100%;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.chat-input-container {
+    padding: 20px;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 25px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.chat-input:focus {
+    border-color: #2196F3;
+}
+
+.send-btn {
+    width: 40px;
+    height: 40px;
+    background: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.send-btn:hover {
+    background: #1976d2;
+    transform: scale(1.05);
+}
+
+.loading {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #2196F3;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.algorithm-steps {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid #e0e0e0;
+}
+
+.step {
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.step.current {
+    background: #fff3e0;
+    border-left: 4px solid #ff9800;
+    font-weight: 600;
+}
+
+.step.completed {
+    background: #e8f5e8;
+    border-left: 4px solid #4caf50;
+    color: #2e7d32;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.stat-card {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    border: 1px solid #e0e0e0;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2196F3;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+@media (max-width: 1200px) {
+    .main-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .chat-sidebar {
+        order: -1;
+        height: 350px;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-container {
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    .header {
+        padding: 20px;
+    }
+    
+    .header h1 {
+        font-size: 1.8em;
+    }
+    
+    .scenario-content {
+        padding: 20px;
+    }
+    
+    .controls {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn {
+        min-width: 200px;
+    }
+    
+    .graph-visualization {
+        min-height: 300px;
+        padding: 20px;
+    }
+    
+    .node {
+        width: 35px;
+        height: 35px;
+        font-size: 14px;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-content">
+            <div class="header">
+                <h1 id="scenarioTitle">🌳 Apprentissage de l'Algorithme de Prim</h1>
+                <div class="level-indicator" id="levelIndicator">Niveau: Débutant</div>
+            </div>
+
+            <div class="scenario-content">
+                <!-- Scénario Débutant -->
+                <div class="scenario-card active" id="beginner-scenario">
+                    <div class="scenario-intro">
+                        <h2>🏰 La Quête du Réseau Royal</h2>
+                        <p>Bienvenue dans le Royaume de Graphia ! Le roi souhaite connecter tous ses châteaux avec le réseau de routes le moins coûteux possible.</p>
+                    </div>
+
+                    <div class="interactive-section">
+                        <h3>🎯 Votre Mission</h3>
+                        <p>Aidez le roi à construire son réseau en utilisant l'algorithme de Prim. Cliquez sur "Commencer" pour débuter votre apprentissage interactif !</p>
+                        
+                        <div class="graph-visualization" id="graph-container">
+                            <div class="node" style="top: 50px; left: 100px;" data-id="A">A</div>
+                            <div class="node" style="top: 150px; left: 200px;" data-id="B">B</div>
+                            <div class="node" style="top: 100px; left: 300px;" data-id="C">C</div>
+                            <div class="node" style="top: 200px; left: 100px;" data-id="D">D</div>
+                            <div class="node" style="top: 250px; left: 250px;" data-id="E">E</div>
+                        </div>
+
+                        <div class="controls">
+                            <button class="btn btn-primary" onclick="startAlgorithm()">Commencer l'Algorithme</button>
+                            <button class="btn btn-secondary" onclick="nextStep()" id="nextStepBtn" disabled>Étape Suivante</button>
+                            <button class="btn btn-secondary" onclick="resetVisualization()">Recommencer</button>
+                        </div>
+
+                        <div class="algorithm-steps" id="algorithmSteps">
+                            <h4>📋 Étapes de l'Algorithme</h4>
+                            <div class="step" id="step-0">1. Choisir un sommet de départ</div>
+                            <div class="step" id="step-1">2. Trouver l'arête de poids minimal</div>
+                            <div class="step" id="step-2">3. Ajouter le sommet à l'arbre</div>
+                            <div class="step" id="step-3">4. Répéter jusqu'à inclure tous les sommets</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scénario Intermédiaire -->
+                <!-- Scénario Intermédiaire -->
+<div class="scenario-card" id="intermediate-scenario">
+    <div class="scenario-intro">
+        <h2>🎯 Le Défi de l'Ingénieur</h2>
+        <p>Vous êtes ingénieur réseau dans une ville intelligente. Optimisez les connexions pour minimiser les coûts !</p>
+    </div>
+
+    <div class="interactive-section">
+        <h3>🏙️ Problème Concret</h3>
+        <p>Connectez 8 bâtiments avec le réseau de fibre optique le moins coûteux. Chaque câble a un coût différent selon la distance.</p>
+        
+        <div class="graph-visualization" id="intermediate-graph">
+            <!-- Graphe plus complexe pour niveau intermédiaire -->
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="startAlgorithm('intermediate')">Commencer l'Algorithme</button>
+            <button class="btn btn-secondary" onclick="nextStep('intermediate')" id="nextStepBtn-intermediate" disabled>Étape Suivante</button>
+            <button class="btn btn-secondary" onclick="resetVisualization('intermediate')">Recommencer</button>
+            <button class="btn btn-success" onclick="askAIForHelp()">Demander de l'Aide à l'IA</button>
+        </div>
+
+        <div class="algorithm-steps" id="algorithmSteps-intermediate">
+            <h4>📋 Étapes de l'Algorithme</h4>
+            <div class="step" id="step-intermediate-0">1. Choisir un sommet de départ</div>
+            <div class="step" id="step-intermediate-1">2. Trouver l'arête de poids minimal</div>
+            <div class="step" id="step-intermediate-2">3. Ajouter le sommet à l'arbre</div>
+            <div class="step" id="step-intermediate-3">4. Répéter jusqu'à inclure tous les sommets</div>
+        </div>
+    </div>
+</div>
+
+                <!-- Scénario Avancé -->
+                <div class="scenario-card" id="advanced-scenario">
+                    <div class="scenario-intro">
+                        <h2>🤔 Débat Socratique avec l'IA</h2>
+                        <p>Explorons ensemble les subtilités de l'algorithme de Prim et ses implications philosophiques !</p>
+                    </div>
+
+                    <div class="interactive-section">
+                        <h3>💭 Sujets de Réflexion</h3>
+                        <ul>
+                            <li>Pourquoi l'approche gloutonne fonctionne-t-elle pour ce problème ?</li>
+                            <li>Quelles sont les limites de l'optimisation locale ?</li>
+                            <li>Comment Prim se compare-t-il à Kruskal philosophiquement ?</li>
+                        </ul>
+                        
+                        <div class="controls">
+                            <button class="btn btn-primary" onclick="startSocraticDebate()">Commencer le Débat</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scénario Expert -->
+                <div class="scenario-card" id="expert-scenario">
+                    <div class="scenario-intro">
+                        <h2>🚀 Laboratoire de Recherche</h2>
+                        <p>Explorez les variantes avancées et les optimisations de pointe de l'algorithme de Prim !</p>
+                    </div>
+
+                    <div class="interactive-section">
+                        <h3>🔬 Recherche Avancée</h3>
+                        <p>Analysons les complexités, les optimisations et les applications modernes de l'algorithme.</p>
+                        
+                        <div class="controls">
+                            <button class="btn btn-primary" onclick="startResearchMode()">Mode Recherche</button>
+                            <button class="btn btn-primary" onclick="analyzeComplexity()">Analyser la Complexité</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-sidebar">
+            <div class="chat-header">
+                <h3>🤖 Assistant IA</h3>
+                <p>Votre guide personnel</p>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="message system">
+                    Bonjour ! Je suis votre assistant IA pour apprendre l'algorithme de Prim. N'hésitez pas à me poser des questions !
+                </div>
+            </div>
+            
+            <div class="loading" id="loadingIndicator">
+                <div class="spinner"></div>
+                <span>L'IA réfléchit...</span>
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="input-group">
+                    <input type="text" class="chat-input"id="userInput" placeholder="Posez votre question..." onkeypress="handleKeyPress(event)">
+                    <button class="btn btn-primary" onclick="sendMessage()">Envoyer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - REMPLACEZ VOTRE_CLE_API par votre vraie clé API Gemini
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=';
+
+let currentLevel = 'beginner';
+let userScore = 0;
+let currentStep = 0;
+let algorithmState = {
+    mst: [],
+    visited: new Set(),
+    edges: [],
+    currentGraph: null
+};
+
+// Générateur de graphes par niveau
+async function generateGraphByLevel(level) {
+    const graphConfigs = {
+        beginner: {
+            nodeCount: 5,
+            description: "Un château royal simple avec 5 tours à connecter",
+            theme: "château royal",
+            complexity: "simple"
+        },
+        intermediate: {
+            nodeCount: 8,
+            description: "Un réseau de bâtiments urbains avec connexions variées",
+            theme: "réseau urbain",
+            complexity: "modéré"
+        },
+        advanced: {
+            nodeCount: 10,
+            description: "Un réseau complexe avec défis théoriques",
+            theme: "réseau académique",
+            complexity: "complexe"
+        },
+        expert: {
+            nodeCount: 12,
+            description: "Un graphe dense pour analyse de performance",
+            theme: "réseau de recherche",
+            complexity: "très complexe"
+        }
+    };
+
+    const config = graphConfigs[level];
+    
+    try {
+        const prompt = `Génère un graphe connexe pour l'algorithme de Prim avec ces spécifications:
+        - ${config.nodeCount} sommets (nommés A, B, C, D, E, F, G, H, I, J, K, L)
+        - Thème: ${config.theme}
+        - Complexité: ${config.complexity}
+        - Les poids des arêtes doivent être entre 1 et 15
+        - Le graphe doit être connexe et permettre une démonstration claire de l'algorithme
+        - Répartition équilibrée des arêtes (ni trop dense, ni trop sparse)
+        
+        Retourne uniquement un objet JSON au format:
+        {
+            "nodes": ["A", "B", "C", ...],
+            "edges": [
+                {"from": "A", "to": "B", "weight": 4},
+                {"from": "B", "to": "C", "weight": 2},
+                ...
+            ],
+            "positions": {
+                "A": {"x": 100, "y": 50},
+                "B": {"x": 200, "y": 150},
+                ...
+            }
+        }`;
+
+        const response = await fetch(GEMINI_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{
+                        text: prompt
+                    }]
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 1000,
+                }
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+        let responseText = data.candidates[0].content.parts[0].text;
+        
+        // Nettoyer la réponse pour extraire le JSON
+        responseText = responseText.replace(/```json\n?|\n?```/g, '').trim();
+        const graphData = JSON.parse(responseText);
+        
+        return graphData;
+    } catch (error) {
+        console.error('Erreur génération graphe:', error);
+        return getDefaultGraph(level);
+    }
+}
+
+// Graphes par défaut en cas d'erreur
+function getDefaultGraph(level) {
+    const defaultGraphs = {
+        beginner: {
+            nodes: ['A', 'B', 'C', 'D', 'E'],
+            edges: [
+                {from: 'A', to: 'B', weight: 4},
+                {from: 'A', to: 'C', weight: 2},
+                {from: 'B', to: 'C', weight: 1},
+                {from: 'B', to: 'D', weight: 5},
+                {from: 'C', to: 'D', weight: 8},
+                {from: 'C', to: 'E', weight: 10},
+                {from: 'D', to: 'E', weight: 2}
+            ],
+            positions: {
+                'A': {x: 100, y: 80},
+                'B': {x: 250, y: 150},
+                'C': {x: 200, y: 50},
+                'D': {x: 150, y: 200},
+                'E': {x: 300, y: 120}
+            }
+        },
+        intermediate: {
+            nodes: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+            edges: [
+                {from: 'A', to: 'B', weight: 3},
+                {from: 'A', to: 'C', weight: 5},
+                {from: 'B', to: 'D', weight: 2},
+                {from: 'C', to: 'E', weight: 4},
+                {from: 'D', to: 'F', weight: 6},
+                {from: 'E', to: 'G', weight: 3},
+                {from: 'F', to: 'H', weight: 1},
+                {from: 'G', to: 'H', weight: 7},
+                {from: 'A', to: 'E', weight: 8},
+                {from: 'B', to: 'F', weight: 9},
+                {from: 'C', to: 'G', weight: 4},
+                {from: 'D', to: 'H', weight: 5}
+            ],
+            positions: {
+                'A': {x: 80, y: 80},
+                'B': {x: 200, y: 80},
+                'C': {x: 320, y: 80},
+                'D': {x: 80, y: 200},
+                'E': {x: 200, y: 200},
+                'F': {x: 320, y: 200},
+                'G': {x: 140, y: 260},
+                'H': {x: 260, y: 260}
+            }
+        }
+    };
+    
+    return defaultGraphs[level] || defaultGraphs.beginner;
+}
+
+// NOUVELLE FONCTION: Générer un nouveau graphe
+async function generateNewGraph() {
+    showLoading(true);
+    addAIMessage("🎲 Génération d'un nouveau graphe aléatoire...");
+    
+    // Réinitialiser l'état de l'algorithme
+    currentStep = 0;
+    algorithmState.mst = [];
+    algorithmState.visited = new Set();
+    
+    // Nettoyer l'affichage
+    document.querySelectorAll('.node').forEach(node => {
+        node.classList.remove('selected', 'in-tree');
+    });
+    document.querySelectorAll('.edge').forEach(edge => {
+        edge.classList.remove('in-mst', 'candidate');
+    });
+    document.querySelectorAll('.step').forEach(step => {
+        step.classList.remove('current', 'completed');
+    });
+    
+    document.getElementById('nextStepBtn').disabled = true;
+    
+    try {
+        algorithmState.currentGraph = await generateGraphByLevel(currentLevel);
+        createGraphNodes();
+        drawGraph();
+        addAIMessage(`✨ Nouveau graphe généré ! ${algorithmState.currentGraph.nodes.length} sommets à connecter. Cliquez sur "Démarrer l'algorithme" pour commencer.`);
+    } catch (error) {
+        console.error('Erreur génération nouveau graphe:', error);
+        algorithmState.currentGraph = getDefaultGraph(currentLevel);
+        createGraphNodes();
+        drawGraph();
+        addAIMessage("📊 Nouveau graphe par défaut chargé et prêt !");
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', async function() {
+    // Récupération des données depuis l'URL ou localStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Méthode 1: Depuis les paramètres URL (recommandé)
+    currentLevel = urlParams.get('level') || 'beginner';
+    userScore = parseInt(urlParams.get('score')) || 0;
+    
+    // Méthode 2: Fallback vers localStorage si disponible
+    if (!urlParams.get('level') && typeof Storage !== 'undefined') {
+        try {
+            const storedLevel = localStorage.getItem('userLevel');
+            const storedScore = localStorage.getItem('userScore');
+            
+            if (storedLevel) currentLevel = storedLevel;
+            if (storedScore) userScore = parseInt(storedScore);
+        } catch (error) {
+            console.log('localStorage non disponible, utilisation des valeurs par défaut');
+        }
+    }
+    
+    // Méthode 3: Fallback vers les variables globales window
+    if (!urlParams.get('level') && window.userLevel) {
+        currentLevel = window.userLevel;
+        userScore = window.userScore || 0;
+    }
+    
+    console.log('Données récupérées:', { level: currentLevel, score: userScore });
+    
+    await initializeScenario();
+    await loadAndDrawGraph();
+    sendInitialAIMessage();
+});
+
+// Fonction utilitaire pour récupérer les données du quiz - SECTION MODIFIÉE
+function getQuizData() {
+    // Essayer plusieurs méthodes de récupération
+    let quizData = {
+        score: userScore || 0,
+        level: currentLevel || 'beginner',
+        totalQuestions: 10,
+        answers: {},
+        completed: false,
+        scenarioTitle: '',
+        scenarioDescription: ''
+    };
+    
+    // Tentative de récupération depuis localStorage si disponible
+    if (typeof Storage !== 'undefined') {
+        try {
+            quizData.score = parseInt(localStorage.getItem('userScore')) || quizData.score;
+            quizData.level = localStorage.getItem('userLevel') || quizData.level;
+            quizData.totalQuestions = parseInt(localStorage.getItem('totalQuestions')) || 10;
+            quizData.answers = JSON.parse(localStorage.getItem('userAnswers')) || {};
+            quizData.completed = localStorage.getItem('quizCompleted') === 'true';
+            quizData.scenarioTitle = localStorage.getItem('scenarioTitle') || '';
+            quizData.scenarioDescription = localStorage.getItem('scenarioDescription') || '';
+        } catch (error) {
+            console.log('Erreur lecture localStorage:', error);
+        }
+    }
+    
+    // Mise à jour avec les valeurs actuelles
+    quizData.level = currentLevel;
+    quizData.score = userScore;
+    
+    return quizData;
+}
+
+async function initializeScenario() {
+    document.querySelectorAll('.scenario-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    
+    const scenarioElement = document.getElementById(`${currentLevel}-scenario`);
+    if (scenarioElement) {
+        scenarioElement.classList.add('active');
+    }
+    
+    const titles = {
+        beginner: '🏰 La Quête du Réseau Royal',
+        intermediate: '🎯 Le Défi de l\'Ingénieur',
+        advanced: '🤔 Débat Socratique avec l\'IA',
+        expert: '🚀 Laboratoire de Recherche'
+    };
+    
+    const levels = {
+        beginner: '🌱 Débutant',
+        intermediate: '🌿 Intermédiaire',
+        advanced: '🌳 Avancé',
+        expert: '🏆 Expert'
+    };
+    
+    const titleElement = document.getElementById('scenarioTitle');
+    const levelElement = document.getElementById('levelIndicator');
+    
+    if (titleElement) titleElement.textContent = titles[currentLevel];
+    if (levelElement) levelElement.textContent = `Niveau: ${levels[currentLevel]}`;
+    
+    // Charger le graphe approprié
+    if (currentLevel === 'intermediate') {
+        await loadAndDrawGraph('intermediate');
+    }
+}
+
+async function loadAndDrawGraph(level = currentLevel) {
+    const graphId = level === 'intermediate' ? 'intermediate-graph' : 'graph-container';
+    showLoading(true);
+    addAIMessage(`🎨 Génération d'un graphe ${level} personnalisé...`);
+    
+    try {
+        algorithmState.currentGraph = await generateGraphByLevel(level);
+        createGraphNodes(graphId);
+        drawGraph(graphId);
+        addAIMessage(`✨ Graphe ${level} généré ! ${algorithmState.currentGraph.nodes.length} sommets à connecter.`);
+    } catch (error) {
+        console.error('Erreur chargement graphe:', error);
+        algorithmState.currentGraph = getDefaultGraph(level);
+        createGraphNodes(graphId);
+        drawGraph(graphId);
+        addAIMessage(`📊 Graphe ${level} par défaut chargé et prêt !`);
+    } finally {
+        showLoading(false);
+    }
+}
+
+
+function createGraphNodes(graphId = 'graph-container') {
+    const container = document.getElementById(graphId);
+    if (!container) return;
+    
+    // Nettoyer le conteneur
+    container.innerHTML = '';
+    
+    // Créer les nœuds
+    algorithmState.currentGraph.nodes.forEach(nodeId => {
+        const nodeEl = document.createElement('div');
+        nodeEl.className = 'node';
+        nodeEl.dataset.id = nodeId;
+        nodeEl.textContent = nodeId;
+        
+        const position = algorithmState.currentGraph.positions[nodeId];
+        nodeEl.style.left = position.x + 'px';
+        nodeEl.style.top = position.y + 'px';
+        
+        container.appendChild(nodeEl);
+    });
+}
+
+function drawGraph(graphId = 'graph-container') {
+    const container = document.getElementById(graphId);
+    if (!container || !algorithmState.currentGraph) return;
+    
+    // Effacer les arêtes existantes
+    container.querySelectorAll('.edge, .weight-label').forEach(el => el.remove());
+    
+    // Dessiner les arêtes
+    algorithmState.currentGraph.edges.forEach(edge => {
+        const fromNode = container.querySelector(`[data-id="${edge.from}"]`);
+        const toNode = container.querySelector(`[data-id="${edge.to}"]`);
+        
+        if (fromNode && toNode) {
+            const fromRect = fromNode.getBoundingClientRect();
+            const toRect = toNode.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            
+            const fromX = fromRect.left - containerRect.left + fromRect.width / 2;
+            const fromY = fromRect.top - containerRect.top + fromRect.height / 2;
+            const toX = toRect.left - containerRect.left + toRect.width / 2;
+            const toY = toRect.top - containerRect.top + toRect.height / 2;
+            
+            const length = Math.sqrt(Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2));
+            const angle = Math.atan2(toY - fromY, toX - fromX) * 180 / Math.PI;
+            
+            // Créer l'arête
+            const edgeEl = document.createElement('div');
+            edgeEl.className = 'edge';
+            edgeEl.style.left = fromX + 'px';
+            edgeEl.style.top = fromY + 'px';
+            edgeEl.style.width = length + 'px';
+            edgeEl.style.transform = `rotate(${angle}deg)`;
+            edgeEl.dataset.from = edge.from;
+            edgeEl.dataset.to = edge.to;
+            edgeEl.dataset.weight = edge.weight;
+            
+            // Créer le label du poids
+            const weightLabel = document.createElement('div');
+            weightLabel.className = 'weight-label';
+            weightLabel.textContent = edge.weight;
+            weightLabel.style.left = (fromX + toX) / 2 - 15 + 'px';
+            weightLabel.style.top = (fromY + toY) / 2 - 15 + 'px';
+            
+            container.appendChild(edgeEl);
+            container.appendChild(weightLabel);
+        }
+    });
+}
+
+function startAlgorithm(level = currentLevel) {
+    const graphId = level === 'intermediate' ? 'intermediate-graph' : 'graph-container';
+    const nextStepBtnId = level === 'intermediate' ? 'nextStepBtn-intermediate' : 'nextStepBtn';
+    
+    if (!algorithmState.currentGraph) {
+        addAIMessage("⚠️ Graphe non chargé. Veuillez patienter...");
+        return;
+    }
+    
+    currentStep = 0;
+    algorithmState.mst = [];
+    algorithmState.visited = new Set();
+    
+    // Réinitialiser l'affichage
+    document.querySelectorAll(`#${graphId} .node`).forEach(node => {
+        node.classList.remove('selected', 'in-tree');
+    });
+    document.querySelectorAll(`#${graphId} .edge`).forEach(edge => {
+        edge.classList.remove('in-mst', 'candidate');
+    });
+    
+    // Commencer par le premier sommet
+    const startNodeId = algorithmState.currentGraph.nodes[0];
+    const startNode = document.querySelector(`#${graphId} [data-id="${startNodeId}"]`);
+    if (startNode) {
+        startNode.classList.add('selected', 'in-tree');
+        algorithmState.visited.add(startNodeId);
+    }
+    
+    updateAlgorithmSteps(0, level);
+    document.getElementById(nextStepBtnId).disabled = false;
+    
+    addAIMessage(`🚀 Algorithme démarré (niveau ${level}) ! Nous commençons par le sommet ${startNodeId}. Cliquez sur "Étape Suivante" pour continuer.`);
+}
+
+function nextStep(level = currentLevel) {
+    const graphId = level === 'intermediate' ? 'intermediate-graph' : 'graph-container';
+    const nextStepBtnId = level === 'intermediate' ? 'nextStepBtn-intermediate' : 'nextStepBtn';
+    
+    if (!algorithmState.currentGraph) return;
+    
+    if (algorithmState.visited.size >= algorithmState.currentGraph.nodes.length) {
+        addAIMessage("🎉 L'arbre couvrant minimal est complet ! Coût total: " + 
+                    algorithmState.mst.reduce((sum, edge) => sum + edge.weight, 0));
+        document.getElementById(nextStepBtnId).disabled = true;
+        return;
+    }
+
+    // Trouver l'arête de poids minimal
+    const candidateEdges = algorithmState.currentGraph.edges.filter(edge => 
+        (algorithmState.visited.has(edge.from) && !algorithmState.visited.has(edge.to)) ||
+        (algorithmState.visited.has(edge.to) && !algorithmState.visited.has(edge.from))
+    );
+    
+    if (candidateEdges.length === 0) {
+        addAIMessage("❌ Aucune arête candidate trouvée !");
+        return;
+    }
+    
+    const minEdge = candidateEdges.reduce((min, edge) => 
+        edge.weight < min.weight ? edge : min, candidateEdges[0]
+    );
+    
+    // Retirer l'ancienne mise en évidence
+    document.querySelectorAll(`#${graphId} .edge.candidate`).forEach(e => e.classList.remove('candidate'));
+    
+    // Mettre en évidence la nouvelle arête
+    const edgeEl = document.querySelector(
+        `#${graphId} [data-from="${minEdge.from}"][data-to="${minEdge.to}"], #${graphId} [data-from="${minEdge.to}"][data-to="${minEdge.from}"]`
+    );
+    
+    if (edgeEl) {
+        edgeEl.classList.add('candidate');
+        
+        // Après 1 seconde, ajouter à l'arbre
+        setTimeout(() => {
+            edgeEl.classList.remove('candidate');
+            edgeEl.classList.add('in-mst');
+            
+            // Ajouter le nouveau sommet
+            const newNode = algorithmState.visited.has(minEdge.from) ? minEdge.to : minEdge.from;
+            algorithmState.visited.add(newNode);
+            
+            const nodeEl = document.querySelector(`#${graphId} [data-id="${newNode}"]`);
+            if (nodeEl) {
+                nodeEl.classList.add('in-tree');
+            }
+            
+            algorithmState.mst.push(minEdge);
+            
+            const remaining = algorithmState.currentGraph.nodes.length - algorithmState.visited.size;
+            if (remaining > 0) {
+                addAIMessage(`✅ Arête ${minEdge.from}-${minEdge.to} (poids: ${minEdge.weight}) ajoutée. ${remaining} sommets restants.`);
+            } else {
+                const totalCost = algorithmState.mst.reduce((sum, edge) => sum + edge.weight, 0);
+                addAIMessage(`🎉 MST terminé ! Coût total: ${totalCost}. Arêtes: ${algorithmState.mst.map(e => `${e.from}-${e.to}`).join(', ')}`);
+                document.getElementById(nextStepBtnId).disabled = true;
+                updateAlgorithmSteps(4, level); // Étape terminée
+            }
+        }, 1000);
+    }
+    
+    currentStep = (currentStep + 1) % 4;
+    updateAlgorithmSteps(currentStep, level);
+    
+    addAIMessage(`🔍 Arête sélectionnée: ${minEdge.from}-${minEdge.to} (poids: ${minEdge.weight})`);
+}
+
+
+async function resetVisualization(level = currentLevel) {
+    const graphId = level === 'intermediate' ? 'intermediate-graph' : 'graph-container';
+    const nextStepBtnId = level === 'intermediate' ? 'nextStepBtn-intermediate' : 'nextStepBtn';
+    
+    currentStep = 0;
+    algorithmState.mst = [];
+    algorithmState.visited = new Set();
+    
+    document.querySelectorAll(`#${graphId} .node`).forEach(node => {
+        node.classList.remove('selected', 'in-tree');
+    });
+    document.querySelectorAll(`#${graphId} .edge`).forEach(edge => {
+        edge.classList.remove('in-mst', 'candidate');
+    });
+    document.querySelectorAll(`#algorithmSteps-${level} .step`).forEach(step => {
+        step.classList.remove('current', 'completed');
+    });
+    
+    document.getElementById(nextStepBtnId).disabled = true;
+    
+    // Regénérer un nouveau graphe
+    addAIMessage("🔄 Génération d'un nouveau graphe...");
+    await loadAndDrawGraph(level);
+}
+
+function updateAlgorithmSteps(currentStepIndex, level = currentLevel) {
+    const stepsElements = document.querySelectorAll(`#algorithmSteps-${level} .step`);
+    stepsElements.forEach((step, index) => {
+        step.classList.remove('current', 'completed');
+        if (index < currentStepIndex) {
+            step.classList.add('completed');
+        } else if (index === currentStepIndex) {
+            step.classList.add('current');
+        }
+    });
+}
+
+// Fonctions pour les autres niveaux
+function startIntermediateChallenge() {
+    addAIMessage("🏗️ Bienvenue dans le défi ingénieur ! Analysons ce réseau de bâtiments. Quelle stratégie proposez-vous pour minimiser les coûts ?");
+}
+
+function startSocraticDebate() {
+    addAIMessage("🤔 Excellente question philosophique ! Réfléchissons ensemble : l'algorithme de Prim fait des choix localement optimaux. Pourquoi cela mène-t-il à une solution globalement optimale ici, contrairement au problème du voyageur de commerce ?");
+}
+
+function startResearchMode() {
+    addAIMessage("🔬 Mode recherche activé ! Explorons les optimisations : tas de Fibonacci vs tas binaire. Dans quels contextes chaque approche est-elle préférable ?");
+}
+
+function askAIForHelp() {
+    addAIMessage("🆘 Je suis là pour vous aider ! Dites-moi quel concept vous pose problème : la théorie des graphes, l'algorithme lui-même, ou l'implémentation ?");
+}
+
+function analyzeComplexity() {
+    addAIMessage("📊 Analyse de complexité :\n• Matrice d'adjacence: O(V²)\n• Liste + tas binaire: O((V+E)logV)\n• Tas de Fibonacci: O(E + VlogV)\n\nPour votre graphe actuel, quelle approche serait optimale ?");
+}
+
+// Fonctions de chat avec l'IA - CORRIGÉES
+async function sendMessage() {
+    const userInput = document.getElementById('userInput');
+    const message = userInput.value.trim();
+    
+    if (!message) return;
+    
+    addMessage(message, 'user');
+    userInput.value = '';
+    showLoading(true);
+    
+    try {
+        const response = await callGeminiAPI(message);
+        addMessage(response, 'ai');
+    } catch (error) {
+        console.error('Erreur API Gemini:', error);
+        addMessage("🔧 Vérifiez votre clé API Gemini dans le code. Remplacez 'VOTRE_CLE_API' par votre vraie clé API.", 'ai');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function callGeminiAPI(message) {
+    
+    const contextInfo = algorithmState.currentGraph ? 
+        `Graphe actuel: ${algorithmState.currentGraph.nodes.length} sommets, ${algorithmState.currentGraph.edges.length} arêtes. ` +
+        `MST en cours: ${algorithmState.mst.length} arêtes ajoutées. ` : '';
+    
+    const systemPrompt = `Tu es un expert en algorithmes spécialisé dans l'enseignement de l'algorithme de Prim.
+    
+    Contexte utilisateur:
+    - Niveau: ${currentLevel}
+    - Score initial: ${userScore}/10
+    - ${contextInfo}
+    
+    Instructions:
+    - Adapte ta réponse au niveau (débutant=simple, expert=technique)
+    - Utilise des émojis appropriés
+    - Reste focalisé sur l'algorithme de Prim
+    - Pour des questions directes, donne des réponses directes
+    - Évite les introductions répétitives
+    - Maximum 150 mots sauf demande d'explication détaillée`;
+
+    const response = await fetch(GEMINI_API_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            contents: [{
+                parts: [{
+                    text: `${systemPrompt}\n\nQuestion: ${message}`
+                }]
+            }],
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 400,
+            }
+        })
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Erreur HTTP: ${response.status} - ${errorData.error?.message || 'Erreur inconnue'}`);
+    }
+
+    const data = await response.json();
+    return data.candidates[0].content.parts[0].text;
+}
+
+function addMessage(text, type) {
+    const messagesContainer = document.getElementById('chatMessages');
+    if (!messagesContainer) return;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${type}`;
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    contentDiv.textContent = text;
+    
+    messageDiv.appendChild(contentDiv);
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function addAIMessage(text) {
+    addMessage(text, 'ai');
+}
+
+function showLoading(show) {
+    const loadingEl = document.getElementById('loadingIndicator');
+    if (loadingEl) {
+        loadingEl.style.display = show ? 'block' : 'none';
+    }
+}
+
+function handleKeyPress(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+}
+
+async function sendInitialAIMessage() {
+    const welcomeMessages = {
+        beginner: "🏰 Bienvenue ! Je vais vous guider dans l'apprentissage de l'algorithme de Prim. Un graphe personnalisé va être généré pour vous !",
+        intermediate: "🎯 Niveau intermédiaire détecté ! Préparez-vous à des défis pratiques avec des graphes adaptatifs générés par IA !",
+        advanced: "🧠 Excellent niveau ! Explorons les aspects théoriques avec des graphes complexes générés spécialement pour stimuler votre réflexion !",
+        expert: "🚀 Niveau expert ! Analysons les performances avec des graphes optimisés pour tester les limites de l'algorithme !"
+    };
+    
+    setTimeout(() => {
+        addAIMessage(welcomeMessages[currentLevel]);
+    }, 1000);
+}
+
+// Redimensionnement automatique
+window.addEventListener('resize', function() {
+    setTimeout(drawGraph, 100);
+});
+    </script>
+</body>
+</html>

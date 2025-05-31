@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Choose Algorithm</title>
+  <style>
+    body {
+      background-color: #f9f9f9;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+      width: auto;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #222;
+    }
+
+    .horizontal-options {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      background: #f9f9f9;
+      border: 2px solid #e0e0e0;
+      border-radius: 0.75rem;
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      transition: border 0.2s ease;
+      position: relative;
+    }
+
+    .option:hover {
+      border-color: #ccc;
+    }
+
+    .option input[type="radio"] {
+      display: none;
+    }
+
+    .custom-radio {
+      width: 1.2rem;
+      height: 1.2rem;
+      border-radius: 50%;
+      border: 3px solid #ccc;
+      margin-right: 0.5rem;
+      display: inline-block;
+      position: relative;
+    }
+
+    .option input[type="radio"]:checked + .custom-radio {
+      border-color: #007bff;
+    }
+
+    .option input[type="radio"]:checked + .custom-radio::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 8px;
+      height: 8px;
+      background-color: #007bff;
+      border-radius: 50%;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      padding: 0.6rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Choose an algorithm</h2>
+    <form class="horizontal-options" id="algorithmForm">
+      <label class="option">
+        <input type="radio" name="algorithm" value="prim">
+        <span class="custom-radio"></span>
+        Prim’s algorithm
+      </label>
+
+      <label class="option">
+        <input type="radio" name="algorithm" value="kruskal">
+        <span class="custom-radio"></span>
+        Kruskal’s algorithm
+      </label>
+
+      <label class="option">
+        <input type="radio" name="algorithm" value="dfs-bfs" checked>
+        <span class="custom-radio"></span>
+        DFS and BFS
+      </label>
+    </form>
+    <button id="startBtn">Commencer</button>
+  </div>
+
+  <script>
+    document.getElementById('startBtn').addEventListener('click', function () {
+      const selectedAlgorithm = document.querySelector('input[name="algorithm"]:checked').value;
+
+      if (selectedAlgorithm === 'prim') {
+        window.location.href = 'prim/primQuiz.html';
+      } else if (selectedAlgorithm === 'kruskal') {
+        window.location.href = 'kruskal.html';
+      } else if (selectedAlgorithm === 'dfs-bfs') {
+        window.location.href = 'sudoku/sudokuHome.html';
+      }
+    });
+  </script>
+</body>
+</html>
